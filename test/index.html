@@ -4,9 +4,20 @@
   </head>
 <body>
     <h1>The Sitzung page</h1>
+    <div><div id="anchor">old</div></div>
   </body>
   <script>
       console.log("test")
-      
+      var s = "<h2>Hello</h2>"
+      s+="<p>Divyansh</p>"
+      var contentArray =  ["one", "two", "three"]
+      for(var i = 0; i<contentArray.length; i++)
+      {
+        s+="<p>"+contentArray[i]+"</p>"
+      }
+      var cardCode= "bUqqHU2g"
+      var url = "https://api.trello.com/1/cards/"+cardCode
+      document.getElementById("anchor").innerHTML=s
+
   </script>
 </html>
