@@ -17,7 +17,14 @@
       }
       var cardCode= "bUqqHU2g"
       var url = "https://api.trello.com/1/cards/"+cardCode
-      document.getElementById("anchor").innerHTML=s
 
-  </script>
+      fetch(url).then(result=>{
+          result.json().then(data=>{
+              console.log(data.desc)
+              s+=data.desc
+              document.getElementById("anchor").innerHTML=s
+            })
+        })
+     
+ </script>
 </html>
