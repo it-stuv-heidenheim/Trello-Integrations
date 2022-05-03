@@ -8,7 +8,7 @@ const cardData = [
   },
   {
     htmlNodeId: "trello-sitzung-link",
-    cardCode: "kgU2MX33",
+    cardCode: "kwS43FhD",
     noMarkdownButLinkLabel: "Direkt zur StuV Sitzung",
     noContentHtmlFallback: `<h4>Link noch nicht freigegeben</h4><p>Der Link zur Sitzung ist noch nicht freigegeben. Schaut einfach eine knappe Stunde vor der 
       Sitzung hier rein, dann spätestens schalten wir den eigentlich immer frei</p>`,
@@ -29,22 +29,28 @@ fetch(baseUrl + agendaCard.cardCode)
 
       var text = cardObj.desc.trim();
 
-      var redLabelSet =
+      if (!text.startsWith("https://")) {
+        text = "https://" + text;
+      }
+
+      console.log(cardObj);
+
+      var redLabelIsSet =
           cardObj.labels.find((labelObj) => {
             var cardIsSetHidden = labelObj.color == "red";
             return cardIsSetHidden;
 
             /* when a card with red label is found, here will be returned true */
           }) != undefined,
-        isLabelSupposedToBeHidden = redLabelSet;
+        isLabelSupposedToBeHidden = redLabelIsSet;
       /* so, if the red label is set, the output is supposed to be hidden on the final page */
 
       if (isLabelSupposedToBeHidden) {
         htmlOut =
           cardToBeFetched.contentHiddenHtmlFallback ||
           cardToBeFetched.noContentHtmlFallback;
-          /* if the data is supposed to be hidden, show the contentHiddenHtmlFallback */
-          /* if that field is empty, take the noContentHtmlFallback instead */
+        /* if the data is supposed to be hidden, show the contentHiddenHtmlFallback */
+        /* if that field is empty, take the noContentHtmlFallback instead */
       } else if (text == "") {
         /* if text is empty, take the fallback for no content */
         htmlOut += cardToBeFetched.noContentHtmlFallback;
@@ -59,20 +65,19 @@ fetch(baseUrl + agendaCard.cardCode)
   })
   .catch((err) => console.warn("Fetch failure at agenda card: \n\n" + err));
 
-
 /* and most of the above logic again for the link card */
 /* could have been solved in a loop as well, but this is better code since more readable */
-var linkCard = cardData[1]
+var linkCard = cardData[1];
 fetch(baseUrl + linkCard.cardCode)
   .then((res) => {
     res.json().then((cardObj) => {
       var htmlOut = "";
 
-      var text = cardObj.desc.trim();
+      var urlFromCard = cardObj.desc.trim();
 
       var redLabelSet =
           cardObj.labels.find((labelObj) => {
-            var cardIsSetHidden = labelObj.color == "red";
+            var cardIsSetHidden = labelObj.name.startsWith("versteckt");
             return cardIsSetHidden;
 
             /* when a card with red label is found, here will be returned true */
@@ -85,12 +90,12 @@ fetch(baseUrl + linkCard.cardCode)
           cardToBeFetched.contentHiddenHtmlFallback ||
           cardToBeFetched.noContentHtmlFallback;
         // if no fallback for hidden content specified, just take the fallback for no content specified
-      } else if (text == "") {
+      } else if (urlFromCard == "") {
         htmlOut += cardToBeFetched.noContentHtmlFallback;
       } else {
-          var linkLabel = cardToBeFetched.noMarkdownButLinkLabel;
+        var linkLabel = cardToBeFetched.noMarkdownButLinkLabel;
 
-          htmlOut += getFormattedButtonFromData(text, linkLabel);
+        htmlOut += getFormattedButtonFromData(urlFromCard, linkLabel);
       }
 
       var domNode = document.getElementById(cardToBeFetched.htmlNodeId);
@@ -100,122 +105,118 @@ fetch(baseUrl + linkCard.cardCode)
   })
   .catch((err) => console.warn("Fetch failure at link card: \n\n" + err));
 
-  var linkCard = cardData[1]
-  if (cardData.noMarkdownButLinkLabel) {
-          /* if that property is set, this card is the link to the session and not the agenda, 
+var linkCard = cardData[1];
+if (cardData.noMarkdownButLinkLabel) {
+  /* if that property is set, this card is the link to the session and not the agenda, 
             therefore has to be treated differently */
-          htmlOut += getFormattedButtonFromData(
-            linkToTeams,
-            "Direkt zur StuV-Sitzung"
-          );
-        } else {
-
-const parseMarkdown = (markdownText) => {
-  /* an old method which was used earlier, but since the data got more complex
+  htmlOut += getFormattedButtonFromData(linkToTeams, "Direkt zur StuV-Sitzung");
+} else {
+  function parseMarkdown(markdownText) {
+    /* an old method which was used earlier, but since the data got more complex
   I decided to switch to showdown, a real markdown converter */
-  const htmlText = markdownText
-    .replace(/^# (.*$)/gim, "<h3>$1</h3>") // the headings
-    .replace(/^## (.*$)/gim, "<h4>$1</h4>")
-    .replace(/^### (.*$)/gim, "<h5>$1</h3>")
-    .replace(/^#### (.*$)/gim, "<h6>$1</h4>")
-    /* .replace(/^\> (.*$)/gim, "<blockquote>$1</blockquote>")
+    const htmlText = markdownText
+      .replace(/^# (.*$)/gim, "<h3>$1</h3>") // the headings
+      .replace(/^## (.*$)/gim, "<h4>$1</h4>")
+      .replace(/^### (.*$)/gim, "<h5>$1</h3>")
+      .replace(/^#### (.*$)/gim, "<h6>$1</h4>")
+      /* .replace(/^\> (.*$)/gim, "<blockquote>$1</blockquote>")
     .replace(/!\[(.*?)\]\((.*?)\)/gim, "<img alt='$1' src='$2' />") */ // we don't need that yet
-    .replace(/\*\*(.*)\*\*/gim, "<b>$1</b>") // bold and italic
-    .replace(/\_(.*)\_/gim, "<i>$1</i>")
-    .replace(/\[(.*?)\]\((.*?)\)/gim, "<a href='$2'>$1</a>")
-    .replace(/\n$/gim, "<br />");
+      .replace(/\*\*(.*)\*\*/gim, "<b>$1</b>") // bold and italic
+      .replace(/\_(.*)\_/gim, "<i>$1</i>")
+      .replace(/\[(.*?)\]\((.*?)\)/gim, "<a href='$2'>$1</a>")
+      .replace(/\n$/gim, "<br />");
 
-  return htmlText.trim();
+    return htmlText.trim();
 
-  // ref: https://www.bigomega.dev/markdown-parser
-};
+    // ref: https://www.bigomega.dev/markdown-parser
+  }
 
-function parsePseudoMarkdown(pseudoMarkdown) {
-  const headingLevel = 3;
-  var lines = pseudoMarkdown.split("\n");
+  function parsePseudoMarkdown(pseudoMarkdown) {
+    const headingLevel = 3;
+    var lines = pseudoMarkdown.split("\n");
 
-  var headingCounter = 1;
-  var lastLineWasAHeading = true;
-  /* just to do so, because if false algo would first assume that a open list has to be closed,
+    var headingCounter = 1;
+    var lastLineWasAHeading = true;
+    /* just to do so, because if false algo would first assume that a open list has to be closed,
   which would result in improperly styling. Browser could even tolerate it, but er...no, we don't want that. */
-  const headingRegex = /^# \w/g;
+    const headingRegex = /^# \w/g;
 
-  var htmlOut = "";
+    var htmlOut = "";
 
-  for (var i = 0; i < lines.length; i++) {
-    var line = lines[i].trim();
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
 
-    line = line.trim();
-    if (line == "") continue;
-    if (line.startsWith("https://")) {
-      if (!lastLineWasAHeading) htmlOut += "</ol>";
-      htmlOut += "<br/>";
-      htmlOut += '<a href="' + line + '">Link zum letzten Protokoll</a>';
+      line = line.trim();
+      if (line == "") continue;
+      if (line.startsWith("https://")) {
+        if (!lastLineWasAHeading) htmlOut += "</ol>";
+        htmlOut += "<br/>";
+        htmlOut += '<a href="' + line + '">Link zum letzten Protokoll</a>';
 
-      break;
+        break;
 
-      /* break because this will be the last line with content */
+        /* break because this will be the last line with content */
+      }
+
+      var isLineHeading = line.match(headingRegex) != null;
+
+      console.log(isLineHeading + ": " + line);
+
+      if (lastLineWasAHeading) {
+        if (isLineHeading) {
+          /* just add the line as new heading */
+          htmlOut +=
+            "<br/><h" +
+            headingLevel +
+            "><small>" +
+            headingCounter +
+            ". </small>" +
+            line.substr(2) +
+            "</h" +
+            headingLevel +
+            ">";
+          headingCounter++;
+        } else {
+          /* begin list with line as first item */
+          htmlOut += "<ol>";
+          htmlOut += "<li>" + line + "</li>";
+        }
+      } else {
+        /* last item was a list item */
+        if (isLineHeading) {
+          /* close list, then add heading */
+          htmlOut += "</ol>";
+
+          htmlOut +=
+            "<br/><h" +
+            headingLevel +
+            "><small>" +
+            headingCounter +
+            ". </small>" +
+            line.substr(2) +
+            "</h" +
+            headingLevel +
+            ">";
+          headingCounter++;
+        } else {
+          /* continue list with line as next item */
+          htmlOut += "<li>" + line + "</li>";
+        }
+      }
+
+      /* and storing heading state for next round */
+      lastLineWasAHeading = isLineHeading;
     }
 
-    var isLineHeading = line.match(headingRegex) != null;
-
-    console.log(isLineHeading + ": " + line);
-
-    if (lastLineWasAHeading) {
-      if (isLineHeading) {
-        /* just add the line as new heading */
-        htmlOut +=
-          "<br/><h" +
-          headingLevel +
-          "><small>" +
-          headingCounter +
-          ". </small>" +
-          line.substr(2) +
-          "</h" +
-          headingLevel +
-          ">";
-        headingCounter++;
-      } else {
-        /* begin list with line as first item */
-        htmlOut += "<ol>";
-        htmlOut += "<li>" + line + "</li>";
-      }
-    } else {
-      /* last item was a list item */
-      if (isLineHeading) {
-        /* close list, then add heading */
-        htmlOut += "</ol>";
-
-        htmlOut +=
-          "<br/><h" +
-          headingLevel +
-          "><small>" +
-          headingCounter +
-          ". </small>" +
-          line.substr(2) +
-          "</h" +
-          headingLevel +
-          ">";
-        headingCounter++;
-      } else {
-        /* continue list with line as next item */
-        htmlOut += "<li>" + line + "</li>";
-      }
+    if (!lastLineWasAHeading) {
+      /* if there is an unclosed list, close it */
+      htmlOut += "</ol>";
     }
 
-    /* and storing heading state for next round */
-    lastLineWasAHeading = isLineHeading;
+    return htmlOut;
   }
 
-  if (!lastLineWasAHeading) {
-    /* if there is an unclosed list, close it */
-    htmlOut += "</ol>";
-  }
-
-  return htmlOut;
-}
-
-document.querySelector("#test-md").innerHTML = parsePseudoMarkdown(`
+  document.querySelector("#test-md").innerHTML = parsePseudoMarkdown(`
 # first heading
 line
 second line
@@ -226,8 +227,8 @@ second list
 https://mi.com
 `);
 
-const getFormattedButtonFromData = (url, label) => {
-  return `<div class="elementor-column elementor-col-100 elementor-top-column elementor-element elementor-element-02f3eb0" data-id="02f3eb0" data-element_type="column">
+  function getFormattedButtonFromData(url, label) {
+    return `<div class="elementor-column elementor-col-100 elementor-top-column elementor-element elementor-element-02f3eb0" data-id="02f3eb0" data-element_type="column">
 			<div class="elementor-column-wrap elementor-element-populated">
 							<div class="elementor-widget-wrap">
 						<div class="elementor-element elementor-element-53a508b elementor-widget elementor-widget-button" data-id="53a508b" data-element_type="widget" data-widget_type="button.default">
@@ -244,4 +245,5 @@ const getFormattedButtonFromData = (url, label) => {
 						</div>
 					</div>
 		</div>`;
-};
+  }
+}
