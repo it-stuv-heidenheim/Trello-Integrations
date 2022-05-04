@@ -7,11 +7,11 @@
   </body>
   <script>
     console.log("test");
-    var s = "<h2>Hello</h2>";
-    s += "<p>Divyansh</p>";
+    var htmlOut = "<h2>Hello</h2>";
+    htmlOut += "<p>Divyansh</p>";
     var contentArray = ["one", "two", "three"];
     for (var i = 0; i < contentArray.length; i++) {
-      s += "<p>" + contentArray[i] + "</p>";
+      htmlOut += "<p>" + contentArray[i] + "</p>";
     }
     var cardCode = "kwS43FhD";
     var url = "https://api.trello.com/1/cards/" + cardCode;
@@ -19,7 +19,7 @@
     fetch(url).then((result) => {
       result.json().then((data) => {
         console.log(data.desc);
-        s += data.desc;
+        htmlOut += data.desc;
 
         var newNode = document.createElement("h1");
         newNode.innerText = data.desc;

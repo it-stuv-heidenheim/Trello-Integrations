@@ -1,3 +1,11 @@
+/* for each sport, there is a card where the responsible people (Sport-Referat) type their information in
+so we have a list of cards and of course a list of corresponding card codes which can be used to get
+the contents via the Trello API
+Then, each content will be displayed in a div which will (on production site) be styled by elementor.
+But there's always a inner div where the text stands in. And we just need the id of that div.
+Each div will get the contents of a card corresponding to one sport.
+*/
+
 const refData = [
   {
     name: "Aktuelles",
@@ -43,6 +51,8 @@ const refData = [
 
 const baseURI = "https://api.trello.com/1/cards/";
 
+/* iterate over all the cards and just fill their contents with the descriptions */
+
 refData.forEach((section) => {
   fetch(baseURI + section.cardCode)
     .then((res) => {
@@ -59,16 +69,17 @@ refData.forEach((section) => {
           hier sollten eigentlich Daten stehen.`);
         }
 
-        if (data.cover.idAttachment) {
-          var image = data.cover.scaled[5].url;
+        try {
+          textNode.innerHTML = htmlOut;
+        } catch (e) {
+          console.log(section);
         }
-
-        textNode.innerHTML = htmlOut;
       });
     })
     .catch((err) => "Fetch failure: \n\n" + err);
 });
 
+/* to make easy formatting possible, we support MarkDown Syntax. Below implemented is a very limited parser */
 const parseMarkdown = (markdownText) => {
   const htmlText = markdownText
     .replace(/^# (.*$)/gim, "<h3>$1</h3>") // the headings, start from h3 since h1 and h2 are already set in static page
